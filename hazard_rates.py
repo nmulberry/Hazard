@@ -12,6 +12,8 @@ https://github.com/CSSEGISandData/COVID-19
 
 Census data: Madi sources?
 
+BC case data: BCCDC
+
 Border data: US bureau of transportation and statistics (1996--2019)
 
 TO DO: flights should be W-W not M-M (but prob doesn't matter)   
@@ -52,8 +54,8 @@ WA_population=7535591.0
 WA_border_traffic=np.loadtxt('data/WA_border_averages.txt')
 
 
-# BC imported cases *** UPDATED AS OF MAR 8th (better sources?)
-imported={'Japan':{'Cases': 0, 'Hazard': 0}, 'South Korea':{'Cases': 0, 'Hazard':0}, 'Germany':{'Cases': 0, 'Hazard':0}, 'Taiwan':{'Cases': 0, 'Hazard':0}, 'France':{'Cases': 0, 'Hazard':0}, 'India':{'Cases': 0, 'Hazard':0}, 'UK':{'Cases': 0, 'Hazard':0}, 'Hong Kong': {'Cases': 0, 'Hazard':0}, 'Mainland China':{'Cases':3, 'Hazard':0}, 'Iran':{'Cases': 5, 'Hazard':0}, 'Hong Kong':{'Cases':1, 'Hazard':0}, 'WA':{'Cases': 0, 'Hazard':0}}
+# BC imported cases *** UPDATED AS OF MAR 8th 
+imported={'Japan':{'Cases': 0, 'Hazard': 0}, 'South Korea':{'Cases': 0, 'Hazard':0}, 'Germany':{'Cases': 0, 'Hazard':0}, 'Taiwan':{'Cases': 0, 'Hazard':0}, 'France':{'Cases': 0, 'Hazard':0}, 'India':{'Cases': 0, 'Hazard':0}, 'UK':{'Cases': 0, 'Hazard':0}, 'Hong Kong': {'Cases': 0, 'Hazard':0}, 'Mainland China':{'Cases':3, 'Hazard':0}, 'Iran':{'Cases': 8, 'Hazard':0}, 'Hong Kong':{'Cases':1, 'Hazard':0}, 'WA':{'Cases': 1, 'Hazard':0}}
 
 #-----------------------------------------------------------------------#
 # HAZARD FROM CHINA
@@ -98,7 +100,7 @@ for country in airCountries:
     seats=tmp_df[['totalSeats']].to_numpy()
     volume=np.tile(np.sum(schedule*seats, axis=0),7)[0:numDays]
     cases=other_confirmed[other_confirmed.Region==country].to_numpy()[0][1:-1]-other_recovered[other_recovered.Region==country].to_numpy()[0][1:-1]-other_deaths[other_deaths.Region==country].to_numpy()[0][1:-1]
-    pop=population_df[population_df.Country==country][['Population']].to_numpy()[0][0]
+    pop=population_df[population_df.Country==country][['PopuIsolated immediately upon returning (early Mar)lation']].to_numpy()[0][0]
     hazard=np.divide(cases*volume, 10000*pop)
     other_risk.append(hazard)
     imported[country]['Hazard']=sum(hazard)
