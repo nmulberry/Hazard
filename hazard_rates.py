@@ -33,23 +33,23 @@ numDays=46
 
 
 # Flight Data 
-flight_df=pd.read_csv('flight-schedules_affected-countries_to_vancouver.csv')
+flight_df=pd.read_csv('data/flight-schedules_affected-countries_to_vancouver.csv')
 
 # Convert true/false to 1/0 for flight schedule
 flight_df[['day1','day2','day3','day4', 'day5', 'day6', 'day7']] = flight_df[['day1','day2','day3','day4', 'day5', 'day6', 'day7']].astype(int)
 
 # Case Count Data...
-confirmed_df=pd.read_csv('time_series_19-covid-Confirmed.csv')
-recovered_df=pd.read_csv('time_series_19-covid-Recovered.csv')
-deaths_df=pd.read_csv('time_series_19-covid-Deaths.csv')
+confirmed_df=pd.read_csv('data/time_series_19-covid-Confirmed.csv')
+recovered_df=pd.read_csv('data/time_series_19-covid-Recovered.csv')
+deaths_df=pd.read_csv('data/time_series_19-covid-Deaths.csv')
 
 # Prevalence Data
-population_df=pd.read_csv('population_data.csv')
+population_df=pd.read_csv('data/population_data.csv')
 
 # WA Data
 WA_outbreaks=['Snohomish County, WA', 'King County, WA', 'Unassigned Location, WA'] #DAILY AVERAGE FOR EACH MONTH (averaged over data from past 5 yrs)
 WA_population=7535591.0
-WA_border_traffic=np.loadtxt('WA_border_averages.txt')
+WA_border_traffic=np.loadtxt('data/WA_border_averages.txt')
 
 
 # BC imported cases *** UPDATED AS OF MAR 8th (better sources?)
@@ -80,6 +80,9 @@ plt.scatter(np.arange(0,numDays,1), china_risk, s=10,c ="#FFDB6D", edgecolor = "
 
 # update cumulative hazard 
 imported['Mainland China']['Hazard'] = sum(china_risk) #sum over time
+
+# OUTPUT
+np.savetxt('output/china_risk.txt', china_risk)
 #-------------------------------------------------------------------------#
 # HAZARD FROM OTHER INTL COUNTRIES
 other_confirmed=confirmed_df[confirmed_df['Region'].isin(airCountries)]
@@ -103,6 +106,8 @@ for country in airCountries:
 other_risk=sum(other_risk)
 plt.scatter(np.arange(0,numDays,1), other_risk, s=10, edgecolor="#52854C", c="#C3D7A4")
 
+# OUTPUT
+np.savetxt('output/other_risk.txt', other_risk)
 #-------------------------------------------------------------------------#
 # HAZARD FROM WA border traffic
 border_confirmed=confirmed_df[confirmed_df['Province'].isin(WA_outbreaks)]
@@ -120,7 +125,10 @@ border_risk=sum(border_risk)
 plt.scatter(np.arange(0,numDays+1,1), border_risk, s=10, edgecolor="#00008B", c="#708090")
 # update cumulative hazard 
 imported['WA']['Hazard'] = sum(border_risk) #sum over time
+# OUTPUT
+np.savetxt('output/border_risk.txt', border_risk)
 
+#----------------------------------------------------------------#
 # Combined Hazard...
 total_risk=border_risk[:-1]+other_risk+china_risk
 plt.scatter(np.arange(0,numDays,1), total_risk, s=10, edgecolor="#ff5050", c="#ffb3b3")
