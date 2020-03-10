@@ -5,16 +5,23 @@ library(ggridges)
 library(reshape2)
 #------------------------------------------------------------#
 # Use hazard data to estimate importations to BC
+# uses: output/hazards.csv
+#       this is output from hazard_rates.py
 #------------------------------------------------------------#
 
-# Set-up
-today  = '2020-03-08' # last data used
+startDate='2020-02-28'# first data used
+today='2020-03-08' # last data used
+
+# Actual data from BC
+BC_imports <- read.csv('data/BC_cases.csv')
+BC_imports <- BC_imports[c(10:22),] # **
+# read output and sort into data vs extrapolated
 risk <- read.csv('output/hazards.csv')
 index = match(today, risk$dates)
 risk_data <- risk[c(1:index),]
 risk_extrap <-risk[-c(1:index),]
 
-#-----Example Trials...First to validate--------#
+#-----Validation Trials--------#
 N = 1000
 trials <- matrix(-1, nrow=N, ncol=length(risk_data$Total.Risk))
 ii=1
@@ -51,8 +58,9 @@ for (rate in risk_data$US) {
 US_validate_imports = rowSums(trials)
 
 #--------------------------------------------------#
-#--------------------------------------------------#
 # Extrapolated imports 
+#--------------------------------------------------#
+
 trials <- matrix(-1, nrow=N, ncol=length(risk_extrap$Total.Risk))
 ii=1
 for (rate in risk_extrap$Total.Risk) {
@@ -61,27 +69,47 @@ for (rate in risk_extrap$Total.Risk) {
 }
 extrapolate_imports = rowSums(trials)
 
-# VALIDATION
-ggplot() + aes(validate_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
+#--------------------------------------------------#
+#       PLOTS
+#--------------------------------------------------#
+
+# Plot trial outcomes and compare to data
+# TOTAL
+total_imports=length(BC_imports[BC_imports[,"Contact"] != 'Local',]$Case.Number)
+ggplot() + aes(validate_imports)+ annotate("point", x = total_imports, y = -0.001, color="red")+
+            geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
             theme_minimal()+
             ggtitle("Distribution of Imports")+
             labs(y= " ", x = "Cases")
-ggsave('ValidateImports.png')
-ggplot() + aes(china_validate_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
+ggsave('output/plots/ValidateImports.png')
+
+
+#CHINA
+china_imports=length(BC_imports[BC_imports[,"Contact"] == 'Mainland China',]$Case.Number)
+ggplot() + aes(china_validate_imports)+ annotate("point", x = china_imports, y = -0.001, color="red")+
+            geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
             theme_minimal()+
             ggtitle("Distribution of Imports")+
             labs(y= " ", x = "Cases")
-ggsave('ChinaValidateImports.png')
-ggplot() + aes(iran_validate_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
+ggsave('output/plots/ChinaValidateImports.png')
+
+# IRAN
+iran_imports=length(BC_imports[BC_imports[,"Contact"] == 'Iran',]$Case.Number)
+ggplot() + aes(iran_validate_imports)+ annotate("point", x = iran_imports, y = -0.001, color="red")+
+            geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
             theme_minimal()+
             ggtitle("Distribution of Imports")+
             labs(y= " ", x = "Total Cases")
-ggsave('IranValidateImports.png')
-ggplot() + aes(US_validate_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
+ggsave('output/plots/IranValidateImports.png')
+
+# US
+US_imports=length(BC_imports[BC_imports[,"Contact"] == 'US',]$Case.Number)
+ggplot() + aes(US_validate_imports)+annotate("point", x = US_imports, y = -0.001, color="red")+
+            geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
             theme_minimal()+
             ggtitle("Distribution of Imports")+
             labs(y= " ", x = "Cases")
-ggsave('USValidateImports.png')
+ggsave('output/plots/USValidateImports.png')
 
 
 # EXTRAPOLATION
@@ -89,6 +117,6 @@ ggplot() + aes(extrapolate_imports)+ geom_histogram(aes(y=..density..), binwidth
             theme_minimal()+
             ggtitle("Distribution of Imports")+
             labs(y= " ", x = "Cases")
-ggsave('ExtrapolateImports.png')
+ggsave('output/plots/ExtrapolateImports.png')
 
 
