@@ -19,8 +19,15 @@ Case Number,Date Confirmed,Contact,Notes
 18,2020-03-05,Iran,
 19,2020-03-05,Iran,Case 18 and 19 live in same household
 20,2020-03-05,US,Washington (Seattle area)
-21,2020-03-05,Local,No recent travel history
+21,2020-03-05,Local,No recent travel history (Health care worked at Lynn Valley Care Centre)
 22,2020-03-07,Iran,
 23,2020-02-11,Princess Cruise,Isolated immediately upon returning (early Mar)
 24,2020-02-11,Princess Cruise,Isolated immediately upon returning (early Mar)
 25,2020-03-07,Local ,Case 22
+26,2020-03-07,Local,Case 21 (Lynn Valley Care Centre)
+27,2020-03-07,Local,Case 21 (Lynn Valley Care Centre)
+28,2020-03-09,Local,Case 21 (Lynn Valley Care Centre)
+29,2020-03-09,Local,Case 21 (Lynn Valley Care Centre)
+30,2020-03-09,Local,Case 21 (Lynn Valley Care Centre)
+31,2020-03-09,Iran,
+32,2020-03-09,Italy,

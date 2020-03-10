@@ -57,7 +57,7 @@ CA_population=40000000
 # Iran estimates??????? daily volume
 est_iran_volume=71
 # Iran fudge number?
-alpha=12
+alpha=5
 
 # BC imported cases *** UPDATED AS OF MAR 8th 
 imported={'Japan':{'Cases': 0, 'Hazard': 0}, 'South Korea':{'Cases': 0, 'Hazard':0}, 'Germany':{'Cases': 0, 'Hazard':0}, 'Taiwan':{'Cases': 0, 'Hazard':0}, 'France':{'Cases': 0, 'Hazard':0}, 'India':{'Cases': 0, 'Hazard':0}, 'UK':{'Cases': 0, 'Hazard':0}, 'Hong Kong': {'Cases': 0, 'Hazard':0}, 'Mainland China':{'Cases':3, 'Hazard':0}, 'Iran':{'Cases': 8, 'Hazard':0}, 'Hong Kong':{'Cases':1, 'Hazard':0}, 'US':{'Cases': 1, 'Hazard':0}}
@@ -103,8 +103,8 @@ plt.scatter(np.arange(0,numDays,1), other_risk, s=10, edgecolor="#52854C", c="#C
 
 #-------------------------------------------------------------------------#
 # HAZARD FROM US FLIGHTS FROM CA AND BORDER/FLIGHTS FROM WA
-border_travel=0.5 #try reducing border traffic 
-flight_travel=0.5 #try reducing flight traffic
+border_travel=1. #try reducing border traffic 
+flight_travel=1. #try reducing flight traffic
 US_risk=[]
 # first calc total volume out of WA/CA
 US_flights= flight_df[(flight_df['departureStateID'] == 'CA') | (flight_df['departureStateID'] == 'WA')]
