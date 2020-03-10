@@ -4,38 +4,48 @@ library(tidyr)
 library(ggridges)
 library(reshape2)
 #------------------------------------------------------------#
-# Use hazard data to estimate importations to BC (to validate?)
+# Use hazard data to estimate importations to BC
 #------------------------------------------------------------#
 
 # Set-up
-border_risk <- scan("output/border_risk.txt")
-china_risk <- scan("output/china_risk.txt")
-iran_risk <- scan("output/iran_risk.txt")
-other_risk <- scan("output/other_risk.txt")
-sk_risk <- scan("output/sk_risk.txt")
+today  = '2020-03-08' # last data used
+risk <- read.csv('output/hazards.csv')
+index = match(today, risk$dates)
+risk_data <- risk[c(1:index),]
+risk_extrap <-risk[-c(1:index),]
 
-# Fudge prevalences??
-alpha_iran = 1.
-alpha_china = 1.
-
-# Combine to get total hazard per day
-total_risk <- border_risk+alpha_china*china_risk+alpha_iran*iran_risk+other_risk+sk_risk
-total_risk <- total_risk
-
-# Example Trials...use to fit alphas??
-N = 10000
-trials <- matrix(-1, nrow=N, ncol=length(total_risk))
+#-----Example Trials...First to validate--------#
+N = 1000
+trials <- matrix(-1, nrow=N, ncol=length(risk$Total.Risk))
 ii=1
-for (rate in total_risk) {
+for (rate in risk$Total.Risk) {
     trials[,ii] = rpois(N, rate)
     ii=ii+1
 }
-# TOTAL UP TO MAR 8
-tot_imports = rowSums(trials)
-ggplot() + aes(tot_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
+validate_imports = rowSums(trials)
+
+# Extrapolated imports 
+trials <- matrix(-1, nrow=N, ncol=length(risk$Total.Risk))
+ii=1
+for (rate in risk$Total.Risk) {
+    trials[,ii] = rpois(N, rate)
+    ii=ii+1
+}
+extrapolate_imports = rowSums(trials)
+
+# VALIDATION
+ggplot() + aes(validate_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
             theme_minimal()+
-            ggtitle("Distribution of Imports (Jan 22 -- Mar 8)")+
+            ggtitle("Distribution of Imports")+
             labs(y= " ", x = "Total Cases")
-ggsave('totalImportsDistribution.png')
+ggsave('ValidateImports.png')
+
+
+# EXTRAPOLATION
+ggplot() + aes(extrapolate_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
+            theme_minimal()+
+            ggtitle("Distribution of Imports")+
+            labs(y= " ", x = "Total Cases")
+ggsave('ExtrapolateImports.png')
 
 

@@ -11,13 +11,13 @@ https://github.com/EpiCoronaHack/Hackathon2020z
 Time Series data from Johns Hopkins CSSE:
 https://github.com/CSSEGISandData/COVID-19
 
-Census data: Madi sources?
+Using forecast from quickforecasts.csv (CC)
 
 BC case data: BCCDC
 
 Border data: US bureau of transportation and statistics (1996--2019)
 
-TO DO: flights should be W-W not M-M (but prob doesn't matter)   
+TO DO: flights should be W-W not M-M (but prob doesn't matter), add EU..?
 
 '''
 #--------SETUP---------------------------------------------------------#
@@ -31,8 +31,6 @@ airChina_names=['Beijing', 'Shanghai', 'Guangdong', 'Henan', 'Jiangsu', 'Liaonin
 airChina_IDs=['PEK', 'PVG', 'CAN','SZX', 'CGO', 'NKG', 'SHE', 'TAO', 'XMN']
 airChina_key={'PEK':'Beijing', 'PVG':'Shanghai','CAN':'Guangdong','SZX':'Guangdong', 'CGO':'Henan',  'NKG':'Jiangsu', 'SHE':'Liaoning', 'TAO':'Shandong', 'XMN':'Fujian'}
 
-# Num days since Jan 22 (LAST UPDATE: Mar 8th)
-numDays=47
 
 # Flight Data 
 flight_df=pd.read_csv('data/flight-schedules_affected-countries_to_vancouver.csv')
@@ -40,36 +38,30 @@ flight_df=pd.read_csv('data/flight-schedules_affected-countries_to_vancouver.csv
 # Convert true/false to 1/0 for flight schedule
 flight_df[['day1','day2','day3','day4', 'day5', 'day6', 'day7']] = flight_df[['day1','day2','day3','day4', 'day5', 'day6', 'day7']].astype(int)
 
-# Case Count Data...
-confirmed_df=pd.read_csv('data/time_series_19-covid-Confirmed.csv')
-recovered_df=pd.read_csv('data/time_series_19-covid-Recovered.csv')
-deaths_df=pd.read_csv('data/time_series_19-covid-Deaths.csv')
+
+# Use Forecasted data (Jan 28--Mar 16)
+forecasts_df=pd.read_csv("quickforecasts.csv")
+hazards_df=forecasts_df
+# Num days in forecast
+numDays= len(forecasts_df.index)
 
 # Prevalence Data
 population_df=pd.read_csv('data/population_data.csv')
 
 # WA Data
-WA_outbreaks=['Snohomish County, WA', 'King County, WA', 'Unassigned Location, WA'] #DAILY AVERAGE FOR EACH MONTH (averaged over data from past 5 yrs)
-WA_population=7535591.0
-WA_border_traffic=np.loadtxt('data/WA_border_averages.txt')
-
-# Iran estimates???????
+#WA_outbreaks=['Snohomish County, WA', 'King County, WA', 'Unassigned Location, WA'] #DAILY AVERAGE FOR EACH MONTH (averaged over data from past 5 yrs)
+WA_border_traffic=np.loadtxt('data/WA_border_averages.txt') #assume much more important than flight volume (which is probably mostly connecting flights through LA/SEA etc.)
+WA_population=7536000
+CA_population=39000000
+# Iran estimates??????? daily volume
 est_iran_volume=71
 
 
 # BC imported cases *** UPDATED AS OF MAR 8th 
-imported={'Japan':{'Cases': 0, 'Hazard': 0}, 'South Korea':{'Cases': 0, 'Hazard':0}, 'Germany':{'Cases': 0, 'Hazard':0}, 'Taiwan':{'Cases': 0, 'Hazard':0}, 'France':{'Cases': 0, 'Hazard':0}, 'India':{'Cases': 0, 'Hazard':0}, 'UK':{'Cases': 0, 'Hazard':0}, 'Hong Kong': {'Cases': 0, 'Hazard':0}, 'Mainland China':{'Cases':3, 'Hazard':0}, 'Iran':{'Cases': 8, 'Hazard':0}, 'Hong Kong':{'Cases':1, 'Hazard':0}, 'WA':{'Cases': 1, 'Hazard':0}}
+imported={'Japan':{'Cases': 0, 'Hazard': 0}, 'South Korea':{'Cases': 0, 'Hazard':0}, 'Germany':{'Cases': 0, 'Hazard':0}, 'Taiwan':{'Cases': 0, 'Hazard':0}, 'France':{'Cases': 0, 'Hazard':0}, 'India':{'Cases': 0, 'Hazard':0}, 'UK':{'Cases': 0, 'Hazard':0}, 'Hong Kong': {'Cases': 0, 'Hazard':0}, 'Mainland China':{'Cases':3, 'Hazard':0}, 'Iran':{'Cases': 8, 'Hazard':0}, 'Hong Kong':{'Cases':1, 'Hazard':0}, 'US':{'Cases': 1, 'Hazard':0}}
 
 #-----------------------------------------------------------------------#
 # HAZARD FROM CHINA
-china_confirmed=confirmed_df[confirmed_df['Province'].isin(airChina_names)]
-china_confirmed=china_confirmed.drop(['Region', 'Lat', 'Long'], axis=1)
-china_recovered=recovered_df[recovered_df['Province'].isin(airChina_names)]
-china_recovered=china_recovered.drop(['Region', 'Lat', 'Long'], axis=1)
-china_deaths=deaths_df[deaths_df['Province'].isin(airChina_names)]
-china_deaths=china_deaths.drop(['Region', 'Lat', 'Long'], axis=1)
-
-# Compute risk
 china_risk=[]
 for airport in airChina_IDs:
     tmp_df=flight_df[flight_df.departureID==airport]
@@ -77,110 +69,91 @@ for airport in airChina_IDs:
     seats=tmp_df[['totalSeats']].to_numpy()
     volume=np.tile(np.sum(schedule*seats, axis=0),7)[0:numDays]
     region=airChina_key[airport]
-    cases=china_confirmed[china_confirmed.Province==region].to_numpy()[0][1:]-china_recovered[china_recovered.Province==region].to_numpy()[0][1:]-china_deaths[china_deaths.Province==region].to_numpy()[0][1:]
-    pop=population_df[population_df.Province==region][['Population']].to_numpy()[0][0]
-    china_risk.append(np.divide(cases*volume, 10000*pop))
+    cases=forecasts_df['Mainland China'].to_numpy()
+    pop=200000000 #fudge...based on major cities with high traffic
+    china_risk.append(np.divide(cases*volume, pop))
 china_risk=sum(china_risk)
 plt.scatter(np.arange(0,numDays,1), china_risk, s=10,c ="#FFDB6D", edgecolor = "#C4961A")
 
 # update cumulative hazard 
 imported['Mainland China']['Hazard'] = sum(china_risk) #sum over time
+hazards_df['Mainland China'] = china_risk
 
-# OUTPUT
-np.savetxt('output/china_risk.txt', china_risk)
 #-------------------------------------------------------------------------#
 # HAZARD FROM OTHER INTL COUNTRIES
-other_confirmed=confirmed_df[confirmed_df['Region'].isin(otherCountries)]
-other_confirmed=other_confirmed.drop(['Province', 'Lat', 'Long'], axis=1)
-other_recovered=recovered_df[recovered_df['Region'].isin(otherCountries)]
-other_recovered=other_recovered.drop(['Province', 'Lat', 'Long'], axis=1)
-other_deaths=deaths_df[deaths_df['Region'].isin(otherCountries)]
-other_deaths=other_deaths.drop(['Province', 'Lat', 'Long'], axis=1)
 other_risk=[]
 for country in otherCountries:
     tmp_df=flight_df[flight_df.departureCountry==country]
     schedule=tmp_df[['day1','day2','day3','day4', 'day5', 'day6', 'day7']].to_numpy()
     seats=tmp_df[['totalSeats']].to_numpy()
     volume=np.tile(np.sum(schedule*seats, axis=0),7)[0:numDays]
-    cases=other_confirmed[other_confirmed.Region==country].to_numpy()[0][1:]-other_recovered[other_recovered.Region==country].to_numpy()[0][1:]-other_deaths[other_deaths.Region==country].to_numpy()[0][1:]
+    cases=forecasts_df[country].to_numpy()
     pop=population_df[population_df.Country==country][['Population']].to_numpy()[0][0]
     hazard=np.divide(cases*volume, 10000*pop)
     other_risk.append(hazard)
     imported[country]['Hazard']=sum(hazard)
+    hazards_df[country] = hazard
 
 other_risk=sum(other_risk)
 plt.scatter(np.arange(0,numDays,1), other_risk, s=10, edgecolor="#52854C", c="#C3D7A4")
 
-# OUTPUT
-np.savetxt('output/other_risk.txt', other_risk)
 #-------------------------------------------------------------------------#
 # HAZARD FROM WA border traffic
-border_confirmed=confirmed_df[confirmed_df['Province'].isin(WA_outbreaks)]
-border_confirmed=border_confirmed.drop(['Region', 'Lat', 'Long'], axis=1)
-border_recovered=recovered_df[recovered_df['Province'].isin(WA_outbreaks)]
-border_recovered=border_recovered.drop(['Region', 'Lat', 'Long'], axis=1)
-border_deaths=deaths_df[deaths_df['Province'].isin(WA_outbreaks)]
-border_deaths=border_deaths.drop(['Region', 'Lat', 'Long'], axis=1)
 border_risk=[]
-for county in WA_outbreaks:
-    volume=np.concatenate((np.repeat(WA_border_traffic[0],10),np.repeat(WA_border_traffic[1],29), np.repeat(WA_border_traffic[2],8))) #manually fix
-    cases=border_confirmed[border_confirmed.Province==county].to_numpy()[0][1:]-border_recovered[border_recovered.Province==county].to_numpy()[0][1:]-border_deaths[border_deaths.Province==county].to_numpy()[0][1:]
-    border_risk.append(np.divide(cases*volume, WA_population))
+volume=np.repeat(WA_border_traffic[2],numDays) # Just use March...
+cases=forecasts_df['US'].to_numpy()
+border_risk.append(np.divide(cases*volume, WA_population+CA_population))
 border_risk=sum(border_risk)
+
 plt.scatter(np.arange(0,numDays,1), border_risk, s=10, edgecolor="#00008B", c="#708090")
 # update cumulative hazard 
-imported['WA']['Hazard'] = sum(border_risk) #sum over time
+imported['US']['Hazard'] = sum(border_risk) #sum over time
 # OUTPUT
-np.savetxt('output/border_risk.txt', border_risk)
+hazards_df['US'] = border_risk
 
 #-------------------------------------------------------------------------#
 # HAZARD FROM IRAN
-iran_confirmed=confirmed_df[confirmed_df['Region'] == 'Iran']
-iran_confirmed=iran_confirmed.drop(['Province', 'Lat', 'Long'], axis=1)
-iran_recovered=recovered_df[recovered_df['Region'] == 'Iran']
-iran_recovered=iran_recovered.drop(['Region', 'Lat', 'Long'], axis=1)
-iran_deaths=deaths_df[deaths_df['Region']== 'Iran']
-iran_deaths=iran_deaths.drop(['Province', 'Lat', 'Long'], axis=1)
 
 volume=np.repeat(est_iran_volume,numDays)
-cases=iran_confirmed.to_numpy()[0][1:]-iran_recovered.to_numpy()[0][1:]-iran_deaths.to_numpy()[0][1:]
+cases=forecasts_df['Iran'].to_numpy() ## PLACEHOLDER CHANGE LATER
 pop=population_df[population_df.Country=='Iran'][['Population']].to_numpy()[0][0]
 iran_risk = np.divide(cases*volume, pop*10000)
 
 # update cumulative hazard 
 imported['Iran']['Hazard'] = sum(iran_risk) #sum over time
 # OUTPUT
-np.savetxt('output/iran_risk.txt', iran_risk)
+hazards_df['Iran'] = iran_risk
 plt.scatter(np.arange(0,numDays,1), iran_risk, s=10, edgecolor="#ff5050", c="#ffb3b3")
 
 #-------------------------------------------------------------------------#
 # HAZARD FROM SK
-sk_confirmed=confirmed_df[confirmed_df['Region'] == 'South Korea']
-sk_confirmed=sk_confirmed.drop(['Province', 'Lat', 'Long'], axis=1)
-sk_recovered=recovered_df[recovered_df['Region'] == 'South Korea']
-sk_recovered=sk_recovered.drop(['Region', 'Lat', 'Long'], axis=1)
-sk_deaths=deaths_df[deaths_df['Region']== 'South Korea']
-sk_deaths=sk_deaths.drop(['Province', 'Lat', 'Long'], axis=1)
-
 tmp_df=flight_df[flight_df.departureCountry=='South Korea']
 schedule=tmp_df[['day1','day2','day3','day4', 'day5', 'day6', 'day7']].to_numpy()
 seats=tmp_df[['totalSeats']].to_numpy()
 volume=np.tile(np.sum(schedule*seats, axis=0),7)[0:numDays]
-cases=sk_confirmed.to_numpy()[0][1:]-sk_recovered.to_numpy()[0][1:]-sk_deaths.to_numpy()[0][1:]
+cases=forecasts_df['South Korea'].to_numpy()
 pop=population_df[population_df.Country=='South Korea'][['Population']].to_numpy()[0][0]
 sk_risk = np.divide(cases*volume, pop*10000)
 
-plt.scatter(np.arange(0,numDays,1),sk_risk, s=10, edgecolor="#00008B", c="#708090")
+plt.scatter(np.arange(0,numDays,1),sk_risk, s=10, edgecolor="#cc0000", c="#ffb3b3")
 # update cumulative hazard 
 imported['South Korea']['Hazard'] = sum(sk_risk) #sum over time
 # OUTPUT
-np.savetxt('output/sk_risk.txt', sk_risk)
-plt.scatter(np.arange(0,numDays,1), sk_risk, s=10, edgecolor="#fc03ad", c="#f2c7e4")
+hazards_df['South Korea'] = sk_risk
 
+
+
+
+# clean up and save
+hazards_df=hazards_df.drop(columns=airChina_names)
+hazards_df['Total Risk'] = sk_risk + other_risk + china_risk + border_risk
+hazards_df.to_csv('output/hazards.csv')
 #------------------------------------------------------------------------------#
-plt.legend(['China', 'Other', 'WA Border', 'Iran', 'South Korea'])
+plt.legend(['China', 'Other', 'US', 'Iran', 'South Korea'])
 plt.ylabel('Daily Hazard Rate')
-plt.xticks([0,numDays],['Jan 22', 'Mar 8'])
+plt.xticks(np.arange(0, numDays),forecasts_df['dates'])
+plt.xticks(rotation=70)
+plt.tight_layout()
 plt.savefig('hazard.eps')
 
 #---------------------------------------------------------------------------#
@@ -193,7 +166,7 @@ for region in imported.keys():
    plt.scatter(x,y)
    plt.annotate(region, (x,y),  textcoords="offset points", xytext=(0,5), ha='center', fontsize=9)
 
-plt.xlabel('Cumulative Hazard (Jan22-Mar8)')
+plt.xlabel('Cumulative Hazard')
 plt.ylabel('Imported Cases')
 plt.savefig('cumulative_hazard.eps')
 
