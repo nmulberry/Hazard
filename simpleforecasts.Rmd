@@ -1,0 +1,307 @@
+---
+title: "quickforecasts"
+author: "Caroline Colijn"
+date: "09/03/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+library(deSolve)
+library(cowplot)
+
+```
+
+## Setup
+
+Read in the data 
+
+```{r}
+confirmed = read.csv("time_series_19-covid-Confirmed.csv", stringsAsFactors = F)
+deaths=read.csv("time_series_19-covid-Deaths.csv", stringsAsFactors = F)
+recov = read.csv("time_series_19-covid-Recovered.csv", stringsAsFactors = F)
+```
+
+Extract dates from the column heads 
+
+```{r}
+colstr=colnames(confirmed)[5:ncol(confirmed)]
+dstr=vapply(colstr, function(x) substr(x, start = 2, stop = nchar(x)), FUN.VALUE="hi")
+dates=as.Date(dstr, format = "%m.%d.%y")
+N=ncol(confirmed)
+```
+
+Pick a row and look at simple prevalence: confirmed cases minus deaths and recoveries 
+
+
+```{r}
+row=25
+plot(dates,confirmed[row,5:N]-recov[row,5:N])
+```
+
+Set up some names 
+
+```{r}
+airChina_names=c('Beijing', 'Shanghai', 'Guangdong', 'Henan', 'Jiangsu', 'Liaoning', 'Shandong', 'Fujian')
+airCountries=c('Japan', 'South Korea', 'Germany', 'Taiwan', 'France', 'India', 'UK', 'Hong Kong')
+china_confirmed = confirmed[which(confirmed$Province %in% airChina_names),]
+china_death = deaths[which(confirmed$Province %in% airChina_names),]
+china_rec = recov[which(confirmed$Province %in% airChina_names),]
+```
+
+
+Start by examining the total for China, then move on to forecasting other groups 
+
+```{r}
+china_total_conf = colSums(china_confirmed[,5:N])
+china_total_rec = colSums(china_rec[,5:N])
+china_total_death=colSums(china_death[,5:N])
+plot(dates,china_total_conf-china_total_rec-china_total_death)
+```
+
+If I forecast that it will be essentially 0. Is that right? Or do we think that there remains travel out of Wuhan and into the rest of China? Hm. 
+
+Get intuition from a ggplottable df 
+
+```{r,eval=FALSE}
+conf = melt(confirmed, id.vars = c("Province", "Region", "Lat","Long"),
+                measure.vars = colnames(confirmed)[5:N])
+recsimp = melt(recov, id.vars = c("Province", "Region", "Lat","Long"),
+                measure.vars = colnames(confirmed)[5:N])
+deathsimp = melt(deaths, id.vars = c("Province", "Region", "Lat","Long"),
+                measure.vars = colnames(confirmed)[5:N])
+conf$variable=as.Date(conf$variable, format = "X%m.%d.%y")
+colnames(conf)=c("Province","Region","Lat","Long","date","cases")
+allsimp=conf; allsimp$prev = conf$cases-recsimp$value - deathsimp$value
+allsimp$deaths = deathsimp$value
+allsimp$recovered = recsimp$value
+
+
+```
+
+
+
+```{r,eval=FALSE}
+ggplot(data=filter(allsimp,Region %in% "South Korea"), aes(x=date, y=prev, colour=Region))+geom_point()
+```
+
+I will need a much simpler kind of forecast.  MUCH Simpler (see fail SIR below). 
+
+For this I should aggregate in the same way that Nicola is going to: Mainland China, etc. And use something closer to extrapolation than to modelling. 
+
+To aggregate or not to aggregate
+
+*  the Chinese airports whose names are in that list
+
+*  mainland china all
+
+*  S. Korea
+
+*  US
+
+* everything else
+
+Set up names and things to match 
+
+```{r}
+extractPrevRegion = function(thisname) {
+# make a simple data frame with date, cases, deaths, rec, prev, numerical data
+if (thisname %in% confirmed$Region) {
+conftmp=confirmed[which(confirmed$Region %in% thisname), ] 
+rectmp=recov[which(confirmed$Region %in% thisname), ] 
+deathtmp=deaths[which(confirmed$Region %in% thisname), ] 
+} else {if (thisname %in% confirmed$Province) {
+  conftmp=confirmed[which(confirmed$Province %in% thisname), ] 
+rectmp=recov[which(confirmed$Province %in% thisname), ] 
+deathtmp=deaths[which(confirmed$Province %in% thisname), ] 
+}}
+if (nrow(conftmp) > 1) { 
+  cases=colSums(conftmp[,5:ncol(conftmp)]) 
+  recs = colSums(rectmp[,5:ncol(rectmp)]) 
+  deas=colSums(deathtmp[,5:ncol(deathtmp)]) 
+} else {cases=conftmp[5:ncol(conftmp)]
+  recs=rectmp[5:ncol(rectmp)]
+  deas=deathtmp[5:ncol(deathtmp)]
+}
+return(prevs=cases-recs-deas)
+}
+```
+
+```{r}
+getForecast=function(prevs, nDays=10, lastDay=55,mode="poly") {
+  nDays=10
+  lastDay=55 
+
+# take last 10 days of the data
+x = (length(prevs)-nDays+1):length(prevs) # was 38:47, for  last nDays 
+ind=x # index to pull last 10 days of prevalence
+y=vector()
+y[1:nDays]=prevs[ind] # cases[ind]-recs[ind]-deas[ind]
+mydf=data.frame(t=x, n=unlist(y)+0.01)
+xx <- seq(min(ind),lastDay,by=1)
+
+#  and  make the fit 
+if (mode == "poly") { fit2 <- lm(formula = n~poly(t,2), data=mydf) 
+fitline=predict(object=fit2, newdata =data.frame(t= xx))}
+
+if (mode == "exp"){ fit2 <- lm(formula = log(n) ~ t, data=mydf)
+fitline=exp(predict(object=fit2, newdata =data.frame(t= xx)))}
+
+myfore=data.frame(t=xx,n=pmax(fitline,0*fitline))
+
+return(list(thedata =mydf, myfore=myfore))
+}
+
+
+# return forecast with date, forecasted prevalence
+
+```
+
+Now use those functions 
+
+```{r}
+# a few tests 
+thisname="Mainland China"
+thisname="US"
+prevs = extractPrevRegion(thisname)
+
+myfore=getForecast(prevs,mode="exp")
+
+ggplot(data=myfore$thedata,aes(x=t,y=n))+geom_point() +
+  geom_line(data=myfore$myfore, aes(x=t,y=n))
+
+```
+
+
+Create the forecasts. Collect into a data frame
+
+```{r}
+allnames = c(airChina_names, airCountries, "Mainland China", "US")
+allfores = lapply( allnames,
+        function(thisone) {prevs=extractPrevRegion(thisone)
+        return(getForecast(prevs,mode="exp"))})
+
+plotlist=list()
+for (k in 1:length(allnames)) {
+plotlist[[k]] = ggplot(data=allfores[[k]]$thedata,aes(x=t,y=n))+geom_point() +
+  geom_line(data=allfores[[k]]$myfore, aes(x=t,y=n))+ggtitle(allnames[k])}
+
+plot_grid(plotlist=plotlist, ncol = 3)
+ggsave(file="quickforecasts.pdf", width=8,height=11)
+```
+
+Actually they look fine. Collect into a data frame. 
+
+```{r}
+forecastdf = data.frame(days=allfores[[1]]$myfore$t,
+        dates=seq.Date(from=dates[min(allfores[[1]]$myfore$t)],
+                       by=1, length.out=length(allfores[[1]]$myfore$t)))
+for (k in 1:length(allnames)) {
+  forecastdf[,k+2]=allfores[[k]]$myfore$n
+}
+colnames(forecastdf)[3:ncol(forecastdf)] = allnames
+write.csv(forecastdf, file = "quickforecasts.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## SIR likelihood model: fail! Ignore. 
+
+
+In this part I explored fitting an SIR model to each dataset but I soon realised that in China, cases were first driven by importations, so this would not fit well. The best way to do that would be a meta-pop model w great travel data, but I doubt it would actually give better short-term forecasts. 
+
+```{r}
+sirmodel <- function(t,state,pars) {
+  with(as.list(c(state,pars)), { 
+    dSdt = -(R0/D)*I*S/N
+    dIdt = (R0/D)*I*S/N - I/D
+    # dRdt = I/D; dr + ds + di =0, S+I+R = N --> R = N-S-I and we eliminate R 
+     list(c(dSdt, dIdt))
+  })
+}
+```
+
+Set up pars and test it. Note that in this model R0 should be beta*D and D should be the total infectious period; let's say 15 days for now. Reframe so it has R0. 
+
+```{r}
+N=1e6
+state=c(S=N-1, I=1)
+times = seq(0,50, by=0.1) 
+pars=list(N=N,D=14,R0=2.5,D=15)
+out = as.data.frame(ode(y= state, times=times,  func=sirmodel, parms=pars))
+```
+
+```{r}
+ggplot(data=out, aes(x=times,y=I))+geom_line()
+```
+Likelihood model: Poisson observations, with mean of I integrated over the day in question 
+
+```{r}
+getlambd = function(out,pars,day) {
+  try(if(var(diff(out$time)) >0.005) {  stop("approx integral assumes equal time steps")} )
+ try(if( max(out$time) < day) {stop("model simulation is not long enough for the data") })
+   if (day==min(out$time)) {ii =  which(out$time >= day & out$time < day+1)
+   } else {   ii = which(out$time > day-1 & out$time <= day) }
+
+  dx=out$time[ii[2]]-out$time[ii[1]] # like dt 
+# ft=with(pars , {(Lwi/N)*(out$E[ii] + out$I[ii])})
+  ft = out$I[ii]*out$S[ii]*pars$R0/(pars$D*pars$N) # beta i s
+return( 0.5*(dx)*(ft[1]+2*sum(ft[2:(length(ft)-1)])+ft[length(ft)])) # numerical int
+}
+
+sirloglike = function( out,pars,thisdata) {
+  # get expected number of cases each day from the Poisson model and the sim'n
+  ld=vapply(thisdata$day, function(x) getlambd(out,pars,x), FUN.VALUE = 1)
+
+  # now call the log likelihood function; thisdata$xd has to be the new cases that day
+  return( sum((-ld) + thisdata$xd*(log(ld)) - log( factorial(thisdata$xd))))
+  } 
+
+loglike = function(R0, pars, thisdata, state,times) {
+  pars$R0 = R0
+  out = as.data.frame(ode(y= state, times=times,  func=sirmodel, parms=pars))
+  return(-sirloglike(out,pars,thisdata)) 
+  # NOTE optim will minimize by default, min ( -loglike) = max (log like)
+}
+
+```
+
+Will have to deal with time of starting but for now let's try just one. 
+
+I will need populations. And anyway I fear that all of this is due to importation and I don't have a metapopn model, nor do I want to make one
+
+```{r,eval=FALSE}
+popdata=read.csv("~/Hazard/data/population_data.csv",stringsAsFactors = F)
+```
+
+
+```{r,eval=FALSE}
+myfit=optim(2.5, function(R0) loglike(R0, pars, thisdata,state,times),method = "Brent",lower=1, upper=6)
+fitpars= pars; pars$R0=myfit$par
+mysol=as.data.frame(ode(y= state, times=times,  func=sirmodel, parms=fitpars))
+plot(mysol$time,mysol$I)
+```
+
+And ... I conclude that this is Not A Good Model. This explains why the multi-R0 estimates did not work, too. 
+
+
+
+
+
+
