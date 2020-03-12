@@ -43,7 +43,7 @@ flight_df[['day1','day2','day3','day4', 'day5', 'day6', 'day7']] = flight_df[['d
 forecasts_df=pd.read_csv("quickforecasts.csv")
 hazards_df=forecasts_df
 # Num days in forecast
-numDays= len(forecasts_df.index)
+numDays=len(forecasts_df.index)
 numDaysData=10 #data used
 
 # Prevalence Data
@@ -57,7 +57,7 @@ CA_population=40000000
 # Iran estimates??????? daily volume
 est_iran_volume=71
 # Iran fudge number?
-alpha=5
+alpha=6
 
 # BC imported cases *** UPDATED AS OF MAR 8th 
 imported={'Japan':{'Cases': 0, 'Hazard': 0}, 'South Korea':{'Cases': 0, 'Hazard':0}, 'Germany':{'Cases': 0, 'Hazard':0}, 'Taiwan':{'Cases': 0, 'Hazard':0}, 'France':{'Cases': 0, 'Hazard':0}, 'India':{'Cases': 0, 'Hazard':0}, 'UK':{'Cases': 0, 'Hazard':0}, 'Hong Kong': {'Cases': 0, 'Hazard':0}, 'Mainland China':{'Cases':3, 'Hazard':0}, 'Iran':{'Cases': 8, 'Hazard':0}, 'Hong Kong':{'Cases':1, 'Hazard':0}, 'US':{'Cases': 1, 'Hazard':0}}
@@ -125,9 +125,9 @@ hazards_df['US'] = US_risk
 #-------------------------------------------------------------------------#
 # HAZARD FROM IRAN
 # No travel restrictions
-#volume=np.repeat(est_iran_volume,numDays)
+volume=np.repeat(est_iran_volume,numDays)
 # With travel restrictions (after ~Mar 8th) assume travel decreases significantly
-volume=np.concatenate((np.repeat(est_iran_volume,numDaysData), np.repeat(0.01*est_iran_volume,numDays-numDaysData)))
+#volume=np.concatenate((np.repeat(est_iran_volume,numDaysData), np.repeat(0.01*est_iran_volume,numDays-numDaysData)))
 cases=forecasts_df['Iran'].to_numpy() 
 #pop=population_df[population_df.Country=='Iran'][['Population']].to_numpy()[0][0]
 pop=10000000

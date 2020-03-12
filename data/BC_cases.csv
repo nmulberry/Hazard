@@ -1,8 +1,8 @@
 Case Number,Date Confirmed,Contact,Notes
 1,2020-01-26,Mainland China,
 2,2020-02-04,Mainland China,
-3,2020-02-06,Local ,Case 2
-4,2020-02-06,Local ,Case 2
+3,2020-02-06,Local,Case 2
+4,2020-02-06,Local,Case 2
 5,2020-02-14,Mainland China,
 6,2020-02-20,Iran,
 7,2020-02-24,Local ,Case 6
@@ -10,11 +10,11 @@ Case Number,Date Confirmed,Contact,Notes
 9,2020-03-03,Local,No connnection to previous cases
 10,2020-03-03,Iran,
 11,2020-03-03,Iran,
-12,2020-03-03,Iran,May be connected to Case 8
+12,2020-03-03,Local,May be connected to Case 8 or may be imported Iran
 13,2020-03-04,Hong Kong ,Or India?
-14,2020-03-05,Local ,Case 10
-15,2020-03-05,Local ,Case 10
-16,2020-03-05,Local ,Case 10
+14,2020-03-05,Local,Case 10
+15,2020-03-05,Local,Case 10
+16,2020-03-05,Local,Case 10
 17,2020-03-05,Local,Case 10
 18,2020-03-05,Iran,
 19,2020-03-05,Iran,Case 18 and 19 live in same household
@@ -23,7 +23,7 @@ Case Number,Date Confirmed,Contact,Notes
 22,2020-03-07,Iran,
 23,2020-02-11,Princess Cruise,Isolated immediately upon returning (early Mar)
 24,2020-02-11,Princess Cruise,Isolated immediately upon returning (early Mar)
-25,2020-03-07,Local ,Case 22
+25,2020-03-07,Local,Case 22
 26,2020-03-07,Local,Case 21 (Lynn Valley Care Centre)
 27,2020-03-07,Local,Case 21 (Lynn Valley Care Centre)
 28,2020-03-09,Local,Case 21 (Lynn Valley Care Centre)

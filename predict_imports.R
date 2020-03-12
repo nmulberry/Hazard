@@ -14,7 +14,7 @@ today='2020-03-08' # last data used
 
 # Actual data from BC
 BC_imports <- read.csv('data/BC_cases.csv')
-BC_imports <- BC_imports[c(10:22),] # **
+BC_imports <- BC_imports[c(8:22),] # **
 # read output and sort into data vs extrapolated
 risk <- read.csv('output/hazards.csv')
 index = match(today, risk$dates)
