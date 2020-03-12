@@ -21,17 +21,8 @@ row=25
 plot(dates,confirmed[row,5:N]-recov[row,5:N])
 
 
-#airChina_names=c('Beijing', 'Shanghai', 'Guangdong', 'Henan', 'Jiangsu', 'Liaoning', 'Shandong', 'Fujian')
-airCountries=c('Japan', 'Germany', 'France', 'India', 'UK')
-#china_confirmed = confirmed[which(confirmed$Province %in% airChina_names),]
-#china_death = deaths[which(confirmed$Province %in% airChina_names),]
-#china_rec = recov[which(confirmed$Province %in% airChina_names),]
-
-
-#china_total_conf = colSums(china_confirmed[,5:N])
-#china_total_rec = colSums(china_rec[,5:N])
-#china_total_death=colSums(china_death[,5:N])
-#plot(dates,china_total_conf-china_total_rec-china_total_death)
+airChina_names=c('Beijing', 'Shanghai', 'Guangdong', 'Henan', 'Jiangsu', 'Liaoning', 'Shandong', 'Fujian')
+airCountries=c('Japan', 'Germany', 'France', 'India', 'UK', 'Korea, South', 'Taiwan*')
 
 
 conf = melt(confirmed, id.vars = c("Province", "Region", "Lat","Long"),
@@ -95,7 +86,7 @@ return(list(thedata =mydf, myfore=myfore))
 
 # return forecast with date, forecasted prevalence
 
-allnames = c(airCountries, "China", "US", "Iran")
+allnames = c(airCountries, airChina_names, "China", "US", "Iran")
 allfores = lapply( allnames,
         function(thisone) {prevs=extractPrevRegion(thisone)
         return(getForecast(prevs,mode="exp"))})
