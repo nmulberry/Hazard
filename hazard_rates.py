@@ -24,7 +24,7 @@ TO DO: flights should be W-W not M-M (but prob doesn't matter), add EU..?
 # Look at: China, Iran, SK , WA on their own, then others lumped together
 
 # "Other" Countries 
-otherCountries=['Japan', 'Germany', 'Taiwan', 'France', 'India', 'UK', 'Hong Kong']
+otherCountries=['Japan', 'Germany', 'France', 'India', 'UK', 'South Korea', 'Taiwan']
 
 # China air traffic
 airChina_names=['Beijing', 'Shanghai', 'Guangdong', 'Henan', 'Jiangsu', 'Liaoning', 'Shandong', 'Fujian']
@@ -57,7 +57,7 @@ CA_population=40000000
 # Iran estimates??????? daily volume
 est_iran_volume=71
 # Iran fudge number?
-alpha=6
+alpha=12
 
 # BC imported cases *** UPDATED AS OF MAR 8th 
 imported={'Japan':{'Cases': 0, 'Hazard': 0}, 'South Korea':{'Cases': 0, 'Hazard':0}, 'Germany':{'Cases': 0, 'Hazard':0}, 'Taiwan':{'Cases': 0, 'Hazard':0}, 'France':{'Cases': 0, 'Hazard':0}, 'India':{'Cases': 0, 'Hazard':0}, 'UK':{'Cases': 0, 'Hazard':0}, 'Hong Kong': {'Cases': 0, 'Hazard':0}, 'Mainland China':{'Cases':3, 'Hazard':0}, 'Iran':{'Cases': 8, 'Hazard':0}, 'Hong Kong':{'Cases':1, 'Hazard':0}, 'US':{'Cases': 1, 'Hazard':0}}
@@ -125,9 +125,9 @@ hazards_df['US'] = US_risk
 #-------------------------------------------------------------------------#
 # HAZARD FROM IRAN
 # No travel restrictions
-volume=np.repeat(est_iran_volume,numDays)
+#volume=np.repeat(est_iran_volume,numDays)
 # With travel restrictions (after ~Mar 8th) assume travel decreases significantly
-#volume=np.concatenate((np.repeat(est_iran_volume,numDaysData), np.repeat(0.01*est_iran_volume,numDays-numDaysData)))
+volume=np.concatenate((np.repeat(est_iran_volume,numDaysData-2), np.repeat(0.01*est_iran_volume,numDays-numDaysData+2)))
 cases=forecasts_df['Iran'].to_numpy() 
 #pop=population_df[population_df.Country=='Iran'][['Population']].to_numpy()[0][0]
 pop=10000000
