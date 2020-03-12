@@ -21,17 +21,17 @@ row=25
 plot(dates,confirmed[row,5:N]-recov[row,5:N])
 
 
-airChina_names=c('Beijing', 'Shanghai', 'Guangdong', 'Henan', 'Jiangsu', 'Liaoning', 'Shandong', 'Fujian')
-airCountries=c('Japan', 'South Korea', 'Germany', 'Taiwan', 'France', 'India', 'UK', 'Hong Kong')
-china_confirmed = confirmed[which(confirmed$Province %in% airChina_names),]
-china_death = deaths[which(confirmed$Province %in% airChina_names),]
-china_rec = recov[which(confirmed$Province %in% airChina_names),]
+#airChina_names=c('Beijing', 'Shanghai', 'Guangdong', 'Henan', 'Jiangsu', 'Liaoning', 'Shandong', 'Fujian')
+airCountries=c('Japan', 'Germany', 'France', 'India', 'UK')
+#china_confirmed = confirmed[which(confirmed$Province %in% airChina_names),]
+#china_death = deaths[which(confirmed$Province %in% airChina_names),]
+#china_rec = recov[which(confirmed$Province %in% airChina_names),]
 
 
-china_total_conf = colSums(china_confirmed[,5:N])
-china_total_rec = colSums(china_rec[,5:N])
-china_total_death=colSums(china_death[,5:N])
-plot(dates,china_total_conf-china_total_rec-china_total_death)
+#china_total_conf = colSums(china_confirmed[,5:N])
+#china_total_rec = colSums(china_rec[,5:N])
+#china_total_death=colSums(china_death[,5:N])
+#plot(dates,china_total_conf-china_total_rec-china_total_death)
 
 
 conf = melt(confirmed, id.vars = c("Province", "Region", "Lat","Long"),
@@ -46,34 +46,31 @@ allsimp=conf; allsimp$prev = conf$cases-recsimp$value - deathsimp$value
 allsimp$deaths = deathsimp$value
 allsimp$recovered = recsimp$value
 
-ggplot(data=filter(allsimp,Region %in% "South Korea"), aes(x=date, y=prev, colour=Region))+geom_point()
 
 extractPrevRegion = function(thisname) {
-
-if (thisname %in% confirmed$Region) {
-    conftmp=confirmed[which(confirmed$Region %in% thisname), ] 
-    rectmp=recov[which(confirmed$Region %in% thisname), ] 
-    deathtmp=deaths[which(confirmed$Region %in% thisname), ] 
-} 
-else {if (thisname %in% confirmed$Province) {
-    conftmp=confirmed[which(confirmed$Province %in% thisname), ] 
-    rectmp=recov[which(confirmed$Province %in% thisname), ] 
-    deathtmp=deaths[which(confirmed$Province %in% thisname), ] 
-}}
-if (nrow(conftmp) > 1) { 
-  cases=colSums(conftmp[,5:ncol(conftmp)]) 
-  recs = colSums(rectmp[,5:ncol(rectmp)]) 
-  deas=colSums(deathtmp[,5:ncol(deathtmp)]) 
-} else {cases=conftmp[5:ncol(conftmp)]
-  recs=rectmp[5:ncol(rectmp)]
-  deas=deathtmp[5:ncol(deathtmp)]
-}
-return(prevs=cases-recs-deas)
+    if (thisname %in% confirmed$Region) {
+        conftmp=confirmed[which(confirmed$Region %in% thisname), ] 
+        rectmp=recov[which(confirmed$Region %in% thisname), ] 
+        deathtmp=deaths[which(confirmed$Region %in% thisname), ] 
+    } else {if (thisname %in% confirmed$Province) {
+        conftmp=confirmed[which(confirmed$Province %in% thisname), ] 
+        rectmp=recov[which(confirmed$Province %in% thisname), ] 
+        deathtmp=deaths[which(confirmed$Province %in% thisname), ] 
+    }}
+    if (nrow(conftmp) > 1) { 
+      cases=colSums(conftmp[,5:ncol(conftmp)]) 
+      recs = colSums(rectmp[,5:ncol(rectmp)]) 
+      deas=colSums(deathtmp[,5:ncol(deathtmp)]) 
+    } else {cases=conftmp[5:ncol(conftmp)]
+      recs=rectmp[5:ncol(rectmp)]
+      deas=deathtmp[5:ncol(deathtmp)]
+    }
+    return(prevs=cases-recs-deas)
 }
 
 getForecast=function(prevs, nDays=10, lastDay=55,mode="poly") {
   nDays=10
-  lastDay=55 
+  lastDay=58 #UPDATE
 
 # take last 10 days of the data
 x = (length(prevs)-nDays+1):length(prevs) # was 38:47, for  last nDays 
@@ -98,28 +95,18 @@ return(list(thedata =mydf, myfore=myfore))
 
 # return forecast with date, forecasted prevalence
 
-# a few tests 
-thisname="Mainland China"
-thisname="US"
-prevs = extractPrevRegion(thisname)
-
-myfore=getForecast(prevs,mode="exp")
-
-ggplot(data=myfore$thedata,aes(x=t,y=n))+geom_point() +
-  geom_line(data=myfore$myfore, aes(x=t,y=n))
-
-allnames = c(airChina_names, airCountries, "Mainland China", "US")
+allnames = c(airCountries, "China", "US", "Iran")
 allfores = lapply( allnames,
         function(thisone) {prevs=extractPrevRegion(thisone)
         return(getForecast(prevs,mode="exp"))})
 
-plotlist=list()
-for (k in 1:length(allnames)) {
-plotlist[[k]] = ggplot(data=allfores[[k]]$thedata,aes(x=t,y=n))+geom_point() +
-  geom_line(data=allfores[[k]]$myfore, aes(x=t,y=n))+ggtitle(allnames[k])}
+#plotlist=list()
+#for (k in 1:length(allnames)) {
+#plotlist[[k]] = ggplot(data=allfores[[k]]$thedata,aes(x=t,y=n))+geom_point() +
+#  geom_line(data=allfores[[k]]$myfore, aes(x=t,y=n))+ggtitle(allnames[k])}
 
-plot_grid(plotlist=plotlist, ncol = 3)
-ggsave(file="quickforecasts.pdf", width=8,height=11)
+#plot_grid(plotlist=plotlist, ncol = 3)
+#ggsave(file="quickforecasts.pdf", width=8,height=11)
 
 forecastdf = data.frame(days=allfores[[1]]$myfore$t,
         dates=seq.Date(from=dates[min(allfores[[1]]$myfore$t)],
