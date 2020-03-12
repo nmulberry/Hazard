@@ -52,8 +52,7 @@ population_df=pd.read_csv('data/population_data.csv')
 # WA Data
 #WA_outbreaks=['Snohomish County, WA', 'King County, WA', 'Unassigned Location, WA'] #DAILY AVERAGE FOR EACH MONTH (averaged over data from past 5 yrs)
 WA_border_traffic=np.loadtxt('data/WA_border_averages.txt') 
-WA_population=7536000
-CA_population=40000000
+
 # Iran estimates??????? daily volume
 est_iran_volume=71
 # Iran fudge number?
@@ -103,8 +102,8 @@ plt.scatter(np.arange(0,numDays,1), other_risk, s=10, edgecolor="#52854C", c="#C
 
 #-------------------------------------------------------------------------#
 # HAZARD FROM US FLIGHTS FROM CA AND BORDER/FLIGHTS FROM WA
-border_travel=1. #try reducing border traffic 
-flight_travel=1. #try reducing flight traffic
+border_travel=0.5 #try reducing border traffic 
+flight_travel=0.5 #try reducing flight traffic
 US_risk=[]
 # first calc total volume out of WA/CA
 US_flights= flight_df[(flight_df['departureStateID'] == 'CA') | (flight_df['departureStateID'] == 'WA')]
@@ -113,7 +112,8 @@ seats=US_flights[['totalSeats']].to_numpy()
 volume=np.tile(np.sum(schedule*seats, axis=0),7)[0:numDays]
 volume=flight_travel*volume + border_travel*WA_border_traffic[2] #just using Mar border data
 cases=forecasts_df['US'].to_numpy()
-US_risk.append(np.divide(cases*volume, WA_population+CA_population))
+US_prev=np.divide(cases, 10000*population_df[population_df.Country=='USA'][['Population']].to_numpy()[0][0])
+US_risk.append(US_prev*volume)
 US_risk=sum(US_risk)
 
 plt.scatter(np.arange(0,numDays,1), US_risk, s=10, edgecolor="#00008B", c="#708090")
