@@ -54,7 +54,7 @@ alpha=12
 
 
 # Travel reduction effectiveness
-rho=0.25
+rho=1.
 
 #-------------------------------------------------------------------------#
 # HAZARD FROM OTHER INTL COUNTRIES
@@ -83,7 +83,7 @@ plt.scatter(np.arange(0,numDays,1), other_risk, s=10, edgecolor="#52854C", c="#C
 # HAZARD FROM US
 #-------------------------------------------------------------------------#
 # WASHINGTON 
-border_travel=0.1 #try reducing border traffic 
+border_travel=1. #try reducing border traffic 
 flight_travel=1. #try reducing flight traffic
 WA_risk=[]
 # first calc total volume out of WA
@@ -129,13 +129,13 @@ plt.scatter(np.arange(0,numDays,1), US_risk, s=10, edgecolor="#ff5050", c="#ffb3
 #-----------------------------------------------------------------------------#
 # clean up and save
 hazards_df['Total Risk'] = other_risk+WA_risk[0]+CA_risk[0]+US_risk[0]
-hazards_df.to_csv('output/lowbordertrafficHazard.csv')
+hazards_df.to_csv('output/test_intl.csv')
 #------------------------------------------------------------------------------#
 plt.legend(['International', 'WA', 'CA', 'Other US'])
 plt.ylabel('Daily Hazard Rate')
 plt.xticks(np.arange(0, numDays),forecasts_df['dates'])
 plt.xticks(rotation=70)
 plt.tight_layout()
-plt.savefig('output/plots/lowbordertrafficHazard.eps')
+plt.savefig('output/plots/test_intl.pdf')
 
 

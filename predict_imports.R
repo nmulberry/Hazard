@@ -9,20 +9,21 @@ library(reshape2)
 #       this is output from hazard_rates.py
 #------------------------------------------------------------#
 
-startDate='2020-02-28'# first data used
-today='2020-03-08' # last data used
+startDate='2020-03-10'# first data used
+today='2020-03-16' # last data used
 
 # Actual data from BC
-BC_imports <- read.csv('data/BC_cases.csv')
-BC_imports <- BC_imports[c(8:22),] # **
+#BC_imports <- read.csv('data/BC_cases.csv')
+#BC_imports <- BC_imports[c(8:22),] # **
 # read output and sort into data vs extrapolated
-risk <- read.csv('output/hazards.csv')
+risk <- read.csv('output/lowbordertrafficHazard.csv')
 index = match(today, risk$dates)
 risk_data <- risk[c(1:index),]
 risk_extrap <-risk[-c(1:index),]
-
-#-----Validation Trials--------#
 N = 1000
+#-----Validation Trials--------#
+if (FALSE){
+
 trials <- matrix(-1, nrow=N, ncol=length(risk_data$Total.Risk))
 ii=1
 for (rate in risk_data$Total.Risk) {
@@ -56,7 +57,7 @@ for (rate in risk_data$US) {
     ii=ii+1
 }
 US_validate_imports = rowSums(trials)
-
+}
 #--------------------------------------------------#
 # Extrapolated imports 
 #--------------------------------------------------#
@@ -75,6 +76,7 @@ extrapolate_imports = rowSums(trials)
 
 # Plot trial outcomes and compare to data
 # TOTAL
+if (FALSE) {
 total_imports=length(BC_imports[BC_imports[,"Contact"] != 'Local',]$Case.Number)
 ggplot() + aes(validate_imports)+ annotate("point", x = total_imports, y = -0.001, color="red")+
             geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
@@ -110,7 +112,7 @@ ggplot() + aes(US_validate_imports)+annotate("point", x = US_imports, y = -0.001
             ggtitle("Importations from WA and CA")+
             labs(y= " ", x = "Cases")
 ggsave('output/plots/USValidateImports.png')
-
+}
 
 # EXTRAPOLATION
 ggplot() + aes(extrapolate_imports)+ geom_histogram(aes(y=..density..), binwidth=1, colour="black", fill="gray") + 
