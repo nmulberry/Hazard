@@ -166,7 +166,7 @@ plt.ylabel('Daily Hazard Rate')
 plt.xticks(np.arange(0, numDays),forecasts_df['dates'])
 plt.xticks(rotation=70)
 plt.tight_layout()
-plt.savefig('output/plots/hazard.eps')
+plt.savefig('output/plots/hazard_lowUSTraffic.eps')
 
 #---------------------------------------------------------------------------#
 # CUMULATIVE HAZARDS 

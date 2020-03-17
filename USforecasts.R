@@ -20,7 +20,6 @@ N=ncol(confirmed)
 row=25
 plot(dates,confirmed[row,5:N]-recov[row,5:N])
 
-airCountries=c('Japan', 'Germany', 'France', 'India', 'United Kingdom', 'Korea, South', 'Taiwan*')
 
 
 conf = melt(confirmed, id.vars = c("Province", "Region", "Lat","Long"),
@@ -59,7 +58,7 @@ extractPrevRegion = function(thisname) {
 
 getForecast=function(prevs, nDays=7, lastDay=62,mode="poly") {
   nDays=7
-  lastDay=62
+  lastDay=62 
 
 # take last 10 days of the data
 x = (length(prevs)-nDays+1):length(prevs) # was 38:47, for  last nDays 
@@ -84,18 +83,19 @@ return(list(thedata =mydf, myfore=myfore))
 
 # return forecast with date, forecasted prevalence
 
-allnames = c(airCountries, "China", "Iran")
+allnames = c('Washington', 'California', 'US')
 allfores = lapply( allnames,
         function(thisone) {prevs=extractPrevRegion(thisone)
         return(getForecast(prevs,mode="exp"))})
 
-#plotlist=list()
-#for (k in 1:length(allnames)) {
-#plotlist[[k]] = ggplot(data=allfores[[k]]$thedata,aes(x=t,y=n))+geom_point() +
-#  geom_line(data=allfores[[k]]$myfore, aes(x=t,y=n))+ggtitle(allnames[k])}
-
-#plot_grid(plotlist=plotlist, ncol = 3)
-#ggsave(file="quickforecasts.pdf", width=8,height=11)
+plotlist=list()
+for (k in 1:length(allnames)) {
+plotlist[[k]] = ggplot(data=allfores[[k]]$thedata,aes(x=t,y=n))+geom_point() +
+  geom_line(data=allfores[[k]]$myfore, aes(x=t,y=n))+ggtitle(allnames[k])}
+    
+ggsave(filename=allnames[[1]], plot= plotlist[[1]], device='png')
+ggsave(filename=allnames[[2]], plot= plotlist[[2]], device='png')
+ggsave(filename=allnames[[3]], plot= plotlist[[3]], device='png')
 
 forecastdf = data.frame(days=allfores[[1]]$myfore$t,
         dates=seq.Date(from=dates[min(allfores[[1]]$myfore$t)],
@@ -104,7 +104,7 @@ for (k in 1:length(allnames)) {
   forecastdf[,k+2]=allfores[[k]]$myfore$n
 }
 colnames(forecastdf)[3:ncol(forecastdf)] = allnames
-write.csv(forecastdf, file = "quickforecasts.csv")
+write.csv(forecastdf, file = "USforecasts.csv")
 
 
 
